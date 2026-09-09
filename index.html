@@ -30,21 +30,24 @@
         .input-row {
             margin-bottom: 10px;
         }
-        #numInput {
-            width: 100%;
-            padding: 14px 12px;
-            font-size: 22px;
-            border: 2px solid #c4b5a5;
-            border-radius: 10px;
-            font-family: monospace;
-            letter-spacing: 1px;
-            background: white;
-            text-align: center;
-            min-height: 56px;
-            word-break: break-all;
-            line-height: 1.6;
-            outline: none;
-        }
+#numInput {
+    width: 100%;
+    padding: 14px 12px;
+    font-size: 22px;
+    border: 2px solid #c4b5a5;
+    border-radius: 10px;
+    font-family: monospace;
+    letter-spacing: 1px;
+    background: white;
+    text-align: center;
+    min-height: 56px;
+    word-break: break-all;
+    line-height: 1.6;
+    outline: none;
+    user-select: none;           /* 🔥 禁止选中 */
+    -webkit-user-select: none;
+    pointer-events: none;        /* 🔥 禁止点击交互，完全阻止键盘 */
+}
         /* 占位符样式（用于 contenteditable） */
         #numInput:empty:before {
             content: attr(placeholder);
