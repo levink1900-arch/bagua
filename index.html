@@ -26,7 +26,6 @@
             margin: 6px 0 12px 0;
         }
 
-        /* ========== 输入框：独占一行，自动换行，禁用键盘 ========== */
         .input-row {
             margin-bottom: 10px;
         }
@@ -41,19 +40,19 @@
             background: white;
             text-align: center;
             min-height: 56px;
-            word-break: break-all;
             line-height: 1.6;
+            resize: none;
             outline: none;
+            overflow: hidden;
+            pointer-events: none;
             user-select: none;
             -webkit-user-select: none;
-            pointer-events: none;
+            color: #333;
         }
-        #numInput:empty:before {
-            content: attr(placeholder);
+        #numInput::placeholder {
             color: #bbb;
         }
 
-        /* ========== 按钮行：播放和停止并排 ========== */
         .btn-row {
             display: flex;
             gap: 12px;
@@ -90,7 +89,6 @@
             background: #c62828;
         }
 
-        /* ========== 键盘 ========== */
         .keyboard {
             display: grid;
             grid-template-columns: repeat(5, 1fr);
@@ -149,7 +147,6 @@
             margin: -4px 0 8px 0;
         }
 
-        /* ========== 间隔控制 ========== */
         .control-area {
             display: flex;
             align-items: center;
@@ -202,7 +199,6 @@
             border-color: #4CAF50;
         }
 
-        /* ========== 状态栏 ========== */
         #status {
             text-align: center;
             font-size: 15px;
@@ -224,20 +220,17 @@
     </style>
 </head>
 <body>
-    <h2>🔊 Yu1900</h2>
+    <h2>🔊 YuW1900</h2>
 
-    <!-- 输入框：使用 div + contenteditable 实现自动换行，禁用键盘 -->
     <div class="input-row">
-        <div id="numInput" contenteditable="true" placeholder="点击下方数字输入"></div>
+        <textarea id="numInput" readonly placeholder="点击下方数字输入"></textarea>
     </div>
 
-    <!-- 播放/停止按钮：同一行并排 -->
     <div class="btn-row">
         <button class="btn btn-play" onclick="playNumbers()">▶ 播放</button>
         <button class="btn btn-stop" onclick="stopPlay()">⏹ 停止</button>
     </div>
 
-    <!-- 数字键盘 -->
     <div class="keyboard">
         <button class="key-btn" onclick="appendChar('1')">1</button>
         <button class="key-btn" onclick="appendChar('2')">2</button>
@@ -257,7 +250,6 @@
     </div>
     <div class="input-hint">💡 点击 · 停顿 1 秒</div>
 
-    <!-- 间隔控制 -->
     <div class="control-area">
         <label for="pauseSlider">⏱️ 间隔</label>
         <input type="range" id="pauseSlider" min="0" max="2000" step="50" value="100" />
@@ -274,49 +266,35 @@
     <div class="footer-space"></div>
 
     <script>
-        // ===================== 核心变量 =====================
         let audioContext = null;
         let isPlaying = false;
         let currentIndex = 0;
         let tokens = [];
         let timerId = null;
 
-        // ===================== 键盘输入（每次操作后主动 blur 收回键盘） =====================
+        const inputEl = document.getElementById('numInput');
+
         function appendChar(ch) {
             if (isPlaying) stopPlay(true);
-            const el = document.getElementById('numInput');
-            el.textContent += ch;
-            // 主动让输入框失去焦点，收回系统键盘
-            el.blur();
-            // 将光标移到末尾（视觉上保持编辑位置）
-            const range = document.createRange();
-            const sel = window.getSelection();
-            range.selectNodeContents(el);
-            range.collapse(false);
-            sel.removeAllRanges();
-            sel.addRange(range);
+            inputEl.value += ch;
+            inputEl.blur();
             if (navigator.vibrate) navigator.vibrate(10);
         }
 
         function deleteLast() {
             if (isPlaying) stopPlay(true);
-            const el = document.getElementById('numInput');
-            el.textContent = el.textContent.slice(0, -1);
-            // 主动让输入框失去焦点，收回系统键盘
-            el.blur();
+            inputEl.value = inputEl.value.slice(0, -1);
+            inputEl.blur();
             if (navigator.vibrate) navigator.vibrate(10);
         }
 
         function clearInput() {
             if (isPlaying) stopPlay(true);
-            const el = document.getElementById('numInput');
-            el.textContent = '';
-            // 主动让输入框失去焦点，收回系统键盘
-            el.blur();
+            inputEl.value = '';
+            inputEl.blur();
             if (navigator.vibrate) navigator.vibrate(10);
         }
 
-        // ===================== 解析输入 =====================
         function parseInput(text) {
             const result = [];
             for (const ch of text) {
@@ -329,20 +307,16 @@
             return result;
         }
 
-        // ===================== 获取音频URL =====================
         function getAudioUrl(digit) {
             return `yinpin/${digit}.wav`;
         }
 
-        // ===================== 获取间隔时间 =====================
         function getPauseTime() {
             return parseInt(document.getElementById('pauseSlider').value);
         }
 
-        // ===================== 播放控制 =====================
         async function playNumbers() {
-            const el = document.getElementById('numInput');
-            const raw = el.textContent.trim();
+            const raw = inputEl.value.trim();
             if (!raw) {
                 alert('请先输入数字');
                 return;
@@ -388,7 +362,6 @@
             }
         }
 
-        // ===================== 核心播放逻辑 =====================
         async function playNext() {
             if (!isPlaying || !audioContext) {
                 document.getElementById('status').textContent = '⏹️ 已停止';
@@ -447,7 +420,6 @@
             }
         }
 
-        // ===================== 调度下一个 =====================
         function scheduleNext() {
             if (timerId) {
                 clearTimeout(timerId);
@@ -464,7 +436,6 @@
             }, pause);
         }
 
-        // ===================== 更新状态 =====================
         function updateStatus(index) {
             const pause = getPauseTime();
             const total = tokens.length;
@@ -477,7 +448,6 @@
                 `🔁 [${Math.min(index + 1, total)}/${total}] ${tokenInfo} (间隔 ${pause}ms)`;
         }
 
-        // ===================== 间隔控制UI =====================
         document.getElementById('pauseSlider').addEventListener('input', function() {
             const val = this.value;
             document.getElementById('pauseDisplay').textContent = val + 'ms';
