@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>象数助念器</title>
+    <title>Yu1900</title>
     <style>
         * {
             box-sizing: border-box;
@@ -26,43 +26,48 @@
             margin: 6px 0 12px 0;
         }
 
-        .input-area {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 12px;
-            flex-wrap: wrap;
+        /* ========== 输入框：独占一行，拉长宽度 ========== */
+        .input-row {
+            margin-bottom: 10px;
         }
         #numInput {
-            flex: 1;
-            padding: 12px 14px;
-            font-size: 22px;
+            width: 100%;
+            padding: 14px 16px;
+            font-size: 24px;
             border: 2px solid #c4b5a5;
             border-radius: 10px;
-            min-width: 120px;
             font-family: monospace;
-            letter-spacing: 3px;
+            letter-spacing: 4px;
             background: white;
-            height: 52px;
+            height: 56px;
+            text-align: center;
         }
-        .btn {
-            padding: 12px 18px;
-            font-size: 16px;
+
+        /* ========== 按钮行：播放和停止并排 ========== */
+        .btn-row {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+        .btn-row .btn {
+            flex: 1;
+            padding: 14px 0;
+            font-size: 18px;
             border: none;
             border-radius: 10px;
             cursor: pointer;
             font-weight: bold;
             touch-action: manipulation;
             transition: transform 0.1s;
-            height: 52px;
-            white-space: nowrap;
+            height: 54px;
+            text-align: center;
         }
-        .btn:active {
+        .btn-row .btn:active {
             transform: scale(0.94);
         }
         .btn-play {
             background: #4CAF50;
             color: white;
-            min-width: 70px;
         }
         .btn-play:active {
             background: #3d8b40;
@@ -70,12 +75,12 @@
         .btn-stop {
             background: #f44336;
             color: white;
-            min-width: 70px;
         }
         .btn-stop:active {
             background: #c62828;
         }
 
+        /* ========== 键盘 ========== */
         .keyboard {
             display: grid;
             grid-template-columns: repeat(5, 1fr);
@@ -134,6 +139,7 @@
             margin: -4px 0 8px 0;
         }
 
+        /* ========== 间隔控制 ========== */
         .control-area {
             display: flex;
             align-items: center;
@@ -186,6 +192,7 @@
             border-color: #4CAF50;
         }
 
+        /* ========== 状态栏 ========== */
         #status {
             text-align: center;
             font-size: 15px;
@@ -207,11 +214,15 @@
     </style>
 </head>
 <body>
-    <h2>🔊 象数助念器</h2>
+    <h2>🔊 Yu1900</h2>
 
-    <!-- 输入框 + 播放/停止 -->
-    <div class="input-area">
-        <input type="text" id="numInput" placeholder="点击下方数字" readonly />
+    <!-- 输入框：独占一行，宽度拉满 -->
+    <div class="input-row">
+        <input type="text" id="numInput" placeholder="点击下方数字输入" readonly />
+    </div>
+
+    <!-- 播放/停止按钮：同一行并排 -->
+    <div class="btn-row">
         <button class="btn btn-play" onclick="playNumbers()">▶ 播放</button>
         <button class="btn btn-stop" onclick="stopPlay()">⏹ 停止</button>
     </div>
@@ -242,7 +253,7 @@
         <input type="range" id="pauseSlider" min="0" max="2000" step="50" value="150" />
         <span id="pauseDisplay">150ms</span>
         <div class="pause-presets">
-            <button class="preset-btn" data-pause="0">无间隔</button>
+            <button class="preset-btn" data-pause="0">无</button>
             <button class="preset-btn active" data-pause="150">0.15s</button>
             <button class="preset-btn" data-pause="180">0.18s</button>
             <button class="preset-btn" data-pause="300">0.3s</button>
