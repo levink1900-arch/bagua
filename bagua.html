@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>象数助念器</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            max-width: 480px;
+            margin: 0 auto;
+            padding: 16px;
+            background: #f5f0eb;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        h2 {
+            text-align: center;
+            color: #5a4a3a;
+            font-size: 22px;
+            margin: 6px 0 12px 0;
+        }
+
+        .input-area {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+        #numInput {
+            flex: 1;
+            padding: 12px 14px;
+            font-size: 22px;
+            border: 2px solid #c4b5a5;
+            border-radius: 10px;
+            min-width: 120px;
+            font-family: monospace;
+            letter-spacing: 3px;
+            background: white;
+            height: 52px;
+        }
+        .btn {
+            padding: 12px 18px;
+            font-size: 16px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            touch-action: manipulation;
+            transition: transform 0.1s;
+            height: 52px;
+            white-space: nowrap;
+        }
+        .btn:active {
+            transform: scale(0.94);
+        }
+        .btn-play {
+            background: #4CAF50;
+            color: white;
+            min-width: 70px;
+        }
+        .btn-play:active {
+            background: #3d8b40;
+        }
+        .btn-stop {
+            background: #f44336;
+            color: white;
+            min-width: 70px;
+        }
+        .btn-stop:active {
+            background: #c62828;
+        }
+
+        .keyboard {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+            margin: 12px 0;
+        }
+        .key-btn {
+            padding: 18px 0;
+            font-size: 26px;
+            font-weight: bold;
+            border: 2px solid #c4b5a5;
+            border-radius: 14px;
+            background: white;
+            cursor: pointer;
+            touch-action: manipulation;
+            transition: transform 0.08s, background 0.08s;
+            user-select: none;
+            font-family: monospace;
+            min-height: 62px;
+        }
+        .key-btn:active {
+            transform: scale(0.92);
+            background: #d4c5b5;
+        }
+        .key-btn.key-dot {
+            background: #e8f0e8;
+            border-color: #8aaa8a;
+            color: #2d6a2d;
+            font-size: 30px;
+        }
+        .key-btn.key-dot:active {
+            background: #c8dcc8;
+        }
+        .key-btn.key-delete {
+            background: #fce8e8;
+            border-color: #d4a0a0;
+            color: #a33;
+            font-size: 20px;
+        }
+        .key-btn.key-delete:active {
+            background: #f8d0d0;
+        }
+        .key-btn.key-clear {
+            background: #f0ece8;
+            border-color: #bbb;
+            color: #666;
+            font-size: 18px;
+        }
+        .key-btn.key-clear:active {
+            background: #e0d8d0;
+        }
+        .input-hint {
+            font-size: 13px;
+            color: #999;
+            text-align: center;
+            margin: -4px 0 8px 0;
+        }
+
+        .control-area {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin: 12px 0;
+            padding: 14px 16px;
+            background: #e8e0d8;
+            border-radius: 12px;
+            flex-wrap: wrap;
+        }
+        .control-area label {
+            font-weight: bold;
+            color: #4a3a2a;
+            font-size: 15px;
+        }
+        #pauseSlider {
+            flex: 1;
+            min-width: 100px;
+            accent-color: #4CAF50;
+            height: 6px;
+        }
+        #pauseDisplay {
+            font-weight: bold;
+            color: #2d6a2d;
+            font-size: 17px;
+            min-width: 65px;
+            text-align: center;
+        }
+        .pause-presets {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        .preset-btn {
+            padding: 6px 14px;
+            font-size: 14px;
+            border: 1px solid #c4b5a5;
+            border-radius: 16px;
+            background: white;
+            cursor: pointer;
+            touch-action: manipulation;
+            transition: all 0.2s;
+        }
+        .preset-btn:active {
+            transform: scale(0.94);
+        }
+        .preset-btn.active {
+            background: #4CAF50;
+            color: white;
+            border-color: #4CAF50;
+        }
+
+        #status {
+            text-align: center;
+            font-size: 15px;
+            color: #5a4a3a;
+            margin-top: 10px;
+            padding: 10px;
+            background: #e8e0d8;
+            border-radius: 10px;
+            min-height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .footer-space {
+            flex: 1;
+            min-height: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h2>🔊 象数助念器</h2>
+
+    <!-- 输入框 + 播放/停止 -->
+    <div class="input-area">
+        <input type="text" id="numInput" placeholder="点击下方数字" readonly />
+        <button class="btn btn-play" onclick="playNumbers()">▶ 播放</button>
+        <button class="btn btn-stop" onclick="stopPlay()">⏹ 停止</button>
+    </div>
+
+    <!-- 数字键盘 -->
+    <div class="keyboard">
+        <button class="key-btn" onclick="appendChar('1')">1</button>
+        <button class="key-btn" onclick="appendChar('2')">2</button>
+        <button class="key-btn" onclick="appendChar('3')">3</button>
+        <button class="key-btn" onclick="appendChar('4')">4</button>
+        <button class="key-btn" onclick="appendChar('5')">5</button>
+        <button class="key-btn" onclick="appendChar('6')">6</button>
+        <button class="key-btn" onclick="appendChar('7')">7</button>
+        <button class="key-btn" onclick="appendChar('8')">8</button>
+        <button class="key-btn" onclick="appendChar('9')">9</button>
+        <button class="key-btn" onclick="appendChar('0')">0</button>
+        <button class="key-btn key-dot" onclick="appendChar('·')">·</button>
+        <button class="key-btn key-delete" onclick="deleteLast()">⌫</button>
+        <button class="key-btn key-clear" onclick="clearInput()">✕</button>
+        <div></div>
+        <div></div>
+    </div>
+    <div class="input-hint">💡 点击 · 停顿 1 秒</div>
+
+    <!-- 间隔控制 -->
+    <div class="control-area">
+        <label for="pauseSlider">⏱️ 间隔</label>
+        <input type="range" id="pauseSlider" min="0" max="2000" step="50" value="150" />
+        <span id="pauseDisplay">150ms</span>
+        <div class="pause-presets">
+            <button class="preset-btn" data-pause="0">无间隔</button>
+            <button class="preset-btn active" data-pause="150">0.15s</button>
+            <button class="preset-btn" data-pause="180">0.18s</button>
+            <button class="preset-btn" data-pause="300">0.3s</button>
+        </div>
+    </div>
+
+    <p id="status">⏸️ 等待播放</p>
+    <div class="footer-space"></div>
+
+    <script>
+        // ===================== 核心变量 =====================
+        let audioContext = null;
+        let isPlaying = false;
+        let currentIndex = 0;
+        let tokens = [];
+        let timerId = null;
+
+        // ===================== 键盘输入 =====================
+        const inputEl = document.getElementById('numInput');
+
+        function appendChar(ch) {
+            if (isPlaying) stopPlay(true);
+            inputEl.value += ch;
+            if (navigator.vibrate) navigator.vibrate(10);
+        }
+
+        function deleteLast() {
+            if (isPlaying) stopPlay(true);
+            inputEl.value = inputEl.value.slice(0, -1);
+            if (navigator.vibrate) navigator.vibrate(10);
+        }
+
+        function clearInput() {
+            if (isPlaying) stopPlay(true);
+            inputEl.value = '';
+            if (navigator.vibrate) navigator.vibrate(10);
+        }
+
+        // ===================== 解析输入 =====================
+        function parseInput(text) {
+            const result = [];
+            for (const ch of text) {
+                if (ch >= '0' && ch <= '9') {
+                    result.push({ type: 'digit', value: ch });
+                } else if (ch === '·' || ch === '.') {
+                    result.push({ type: 'pause' });
+                }
+            }
+            return result;
+        }
+
+        // ===================== 获取音频URL =====================
+        function getAudioUrl(digit) {
+            return `yinpin/${digit}.wav`;
+        }
+
+        // ===================== 获取间隔时间 =====================
+        function getPauseTime() {
+            return parseInt(document.getElementById('pauseSlider').value);
+        }
+
+        // ===================== 播放控制 =====================
+        async function playNumbers() {
+            const raw = inputEl.value.trim();
+            if (!raw) {
+                alert('请先输入数字');
+                return;
+            }
+
+            tokens = parseInput(raw);
+            if (tokens.length === 0) {
+                alert('只支持数字 0-9 和停顿符 ·');
+                return;
+            }
+
+            stopPlay(true);
+
+            try {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                if (audioContext.state === 'suspended') {
+                    await audioContext.resume();
+                }
+            } catch (e) {
+                alert('无法启动音频，请点击播放按钮');
+                return;
+            }
+
+            isPlaying = true;
+            currentIndex = 0;
+            updateStatus(currentIndex);
+            playNext();
+        }
+
+        function stopPlay(silent = false) {
+            isPlaying = false;
+            if (timerId) {
+                clearTimeout(timerId);
+                timerId = null;
+            }
+            if (audioContext) {
+                audioContext.close().then(() => {
+                    audioContext = null;
+                }).catch(() => {});
+            }
+            if (!silent) {
+                document.getElementById('status').textContent = '⏹️ 已停止';
+            }
+        }
+
+        // ===================== 核心播放逻辑 =====================
+        async function playNext() {
+            if (!isPlaying || !audioContext) {
+                document.getElementById('status').textContent = '⏹️ 已停止';
+                return;
+            }
+
+            if (currentIndex >= tokens.length) {
+                currentIndex = 0;
+                updateStatus(currentIndex);
+                scheduleNext();
+                return;
+            }
+
+            const token = tokens[currentIndex];
+
+            if (token.type === 'pause') {
+                const PAUSE_DURATION = 1000;
+                document.getElementById('status').textContent = `⏸️ 停顿中... (1s)  ${currentIndex + 1}/${tokens.length}`;
+                if (timerId) clearTimeout(timerId);
+                timerId = setTimeout(() => {
+                    timerId = null;
+                    if (!isPlaying || !audioContext) return;
+                    currentIndex++;
+                    updateStatus(currentIndex);
+                    playNext();
+                }, PAUSE_DURATION);
+                return;
+            }
+
+            const digit = token.value;
+            const url = getAudioUrl(digit);
+
+            try {
+                const response = await fetch(url);
+                if (!response.ok) throw new Error('文件不存在');
+                const arrayBuffer = await response.arrayBuffer();
+                const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+
+                const source = audioContext.createBufferSource();
+                source.buffer = audioBuffer;
+                source.connect(audioContext.destination);
+
+                source.onended = () => {
+                    if (!isPlaying || !audioContext) return;
+                    currentIndex++;
+                    updateStatus(currentIndex);
+                    scheduleNext();
+                };
+
+                source.start();
+            } catch (e) {
+                console.error('加载音频失败:', url, e);
+                currentIndex++;
+                updateStatus(currentIndex);
+                scheduleNext();
+            }
+        }
+
+        // ===================== 调度下一个 =====================
+        function scheduleNext() {
+            if (timerId) {
+                clearTimeout(timerId);
+                timerId = null;
+            }
+            if (!isPlaying || !audioContext) {
+                document.getElementById('status').textContent = '⏹️ 已停止';
+                return;
+            }
+            const pause = getPauseTime();
+            timerId = setTimeout(() => {
+                timerId = null;
+                playNext();
+            }, pause);
+        }
+
+        // ===================== 更新状态 =====================
+        function updateStatus(index) {
+            const pause = getPauseTime();
+            const total = tokens.length;
+            let tokenInfo = '';
+            if (index < tokens.length) {
+                const t = tokens[index];
+                tokenInfo = t.type === 'pause' ? '⏸️停顿' : `${t.value}`;
+            }
+            document.getElementById('status').textContent =
+                `🔁 [${Math.min(index + 1, total)}/${total}] ${tokenInfo} (间隔 ${pause}ms)`;
+        }
+
+        // ===================== 间隔控制UI =====================
+        document.getElementById('pauseSlider').addEventListener('input', function() {
+            const val = this.value;
+            document.getElementById('pauseDisplay').textContent = val + 'ms';
+            document.querySelectorAll('.preset-btn').forEach(btn => {
+                btn.classList.toggle('active', parseInt(btn.dataset.pause) === parseInt(val));
+            });
+            if (isPlaying) updateStatus(currentIndex);
+        });
+
+        document.querySelectorAll('.preset-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const val = parseInt(this.dataset.pause);
+                document.getElementById('pauseSlider').value = val;
+                document.getElementById('pauseDisplay').textContent = val + 'ms';
+                document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                if (isPlaying) updateStatus(currentIndex);
+            });
+        });
+    </script>
+</body>
+</html>
