@@ -329,15 +329,21 @@
 
             stopPlay(true);
 
-            try {
-                audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                if (audioContext.state === 'suspended') {
-                    await audioContext.resume();
-                }
-            } catch (e) {
-                alert('无法启动音频，请点击播放按钮');
-                return;
-            }
+try {
+    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    
+    // 🔥 让 iOS 音频走媒体通道，不受静音开关影响
+    if (navigator.audioSession) {
+        navigator.audioSession.type = 'playback';
+    }
+    
+    if (audioContext.state === 'suspended') {
+        await audioContext.resume();
+    }
+} catch (e) {
+    alert('无法启动音频，请点击播放按钮');
+    return;
+}
 
             isPlaying = true;
             currentIndex = 0;
