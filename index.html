@@ -269,6 +269,7 @@
         let currentIndex = 0;
         let tokens = [];
         let timerId = null;
+        let audioBuffers = {};  // 🔥 存放已解码的音频
 
         const inputEl = document.getElementById('numInput');
 
@@ -313,6 +314,22 @@
             return parseInt(document.getElementById('pauseSlider').value);
         }
 
+        // 🔥 预加载所有音频到内存
+        async function preloadAllAudio() {
+            const digits = ['0','1','2','3','4','5','6','7','8'];
+            document.getElementById('status').textContent = '⏳ 正在加载音频...';
+            for (const d of digits) {
+                const url = getAudioUrl(d);
+                try {
+                    const response = await fetch(url);
+                    const arrayBuffer = await response.arrayBuffer();
+                    audioBuffers[d] = await audioContext.decodeAudioData(arrayBuffer);
+                } catch (e) {
+                    console.error(`加载 ${d} 失败:`, e);
+                }
+            }
+        }
+
         async function playNumbers() {
             const raw = inputEl.value.trim();
             if (!raw) {
@@ -328,21 +345,24 @@
 
             stopPlay(true);
 
-try {
-    audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    
-    // 🔥 让 iOS 音频走媒体通道，不受静音开关影响
-    if (navigator.audioSession) {
-        navigator.audioSession.type = 'playback';
-    }
-    
-    if (audioContext.state === 'suspended') {
-        await audioContext.resume();
-    }
-} catch (e) {
-    alert('无法启动音频，请点击播放按钮');
-    return;
-}
+            try {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                
+                // 🔥 让 iOS 音频走媒体通道，不受静音开关影响
+                if (navigator.audioSession) {
+                    navigator.audioSession.type = 'playback';
+                }
+                
+                if (audioContext.state === 'suspended') {
+                    await audioContext.resume();
+                }
+            } catch (e) {
+                alert('无法启动音频，请点击播放按钮');
+                return;
+            }
+
+            // 🔥 先预加载所有音频
+            await preloadAllAudio();
 
             isPlaying = true;
             currentIndex = 0;
@@ -372,19 +392,19 @@ try {
                 return;
             }
 
-if (currentIndex >= tokens.length) {
-    currentIndex = 0;
-    updateStatus(currentIndex);
-    // 循环间隔：单独设置，单位毫秒
-    const LOOP_PAUSE = 3000; // 3秒，你可以改成任意值
-    if (timerId) clearTimeout(timerId);
-    timerId = setTimeout(() => {
-        timerId = null;
-        if (!isPlaying || !audioContext) return;
-        playNext();
-    }, LOOP_PAUSE);
-    return;
-}
+            if (currentIndex >= tokens.length) {
+                currentIndex = 0;
+                updateStatus(currentIndex);
+                // 循环间隔：单独设置，单位毫秒
+                const LOOP_PAUSE = 3000; // 3秒，你可以改成任意值
+                if (timerId) clearTimeout(timerId);
+                timerId = setTimeout(() => {
+                    timerId = null;
+                    if (!isPlaying || !audioContext) return;
+                    playNext();
+                }, LOOP_PAUSE);
+                return;
+            }
 
             const token = tokens[currentIndex];
 
@@ -403,32 +423,26 @@ if (currentIndex >= tokens.length) {
             }
 
             const digit = token.value;
-            const url = getAudioUrl(digit);
+            const audioBuffer = audioBuffers[digit];
+            if (!audioBuffer) {
+                console.error('音频未加载:', digit);
+                currentIndex++;
+                scheduleNext();
+                return;
+            }
 
-            try {
-                const response = await fetch(url);
-                if (!response.ok) throw new Error('文件不存在');
-                const arrayBuffer = await response.arrayBuffer();
-                const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+            const source = audioContext.createBufferSource();
+            source.buffer = audioBuffer;
+            source.connect(audioContext.destination);
 
-                const source = audioContext.createBufferSource();
-                source.buffer = audioBuffer;
-                source.connect(audioContext.destination);
-
-                source.onended = () => {
-                    if (!isPlaying || !audioContext) return;
-                    currentIndex++;
-                    updateStatus(currentIndex);
-                    scheduleNext();
-                };
-
-                source.start();
-            } catch (e) {
-                console.error('加载音频失败:', url, e);
+            source.onended = () => {
+                if (!isPlaying || !audioContext) return;
                 currentIndex++;
                 updateStatus(currentIndex);
                 scheduleNext();
-            }
+            };
+
+            source.start();
         }
 
         function scheduleNext() {
