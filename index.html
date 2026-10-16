@@ -397,7 +397,7 @@
                 currentIndex = 0;
                 updateStatus(currentIndex);
                 // 循环间隔：单独设置，单位毫秒
-                const LOOP_PAUSE = 3000; // 3秒，你可以改成任意值
+                const LOOP_PAUSE = 2500; // 3秒，你可以改成任意值
                 if (timerId) clearTimeout(timerId);
                 timerId = setTimeout(() => {
                     timerId = null;
